@@ -230,7 +230,7 @@ public class Agent2 {
 			return syntax[termParams.get(n) - 1];
 	}
 
-	public void entail() {
+	public void entail() { /*
 		// Entail using rules RDFS2 and RDFS3
 		for (int i = 0; i < memory.size(); i++) {
 			if (memory.get(i).getValue("p").toString().contains("domain")) { // entailment
@@ -324,7 +324,7 @@ public class Agent2 {
 
 			}
 
-		}
+		} */
 	}
 
 	public boolean checkIfEntailmentInDataset(String entailment) {

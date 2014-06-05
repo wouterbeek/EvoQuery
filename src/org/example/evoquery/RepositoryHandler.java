@@ -26,15 +26,9 @@ public class RepositoryHandler {
 
 		File dataDir = new File(repositoryPath);
 		MemoryStore store = new MemoryStore(dataDir);
-		ForwardChainingRDFSInferencer inf = new ForwardChainingRDFSInferencer(
-				store);
-		repo = new SailRepository(inf);
-		ArrayList<BindingSet> ress = queryRepo("SELECT * WHERE { ?x ?p ?y } LIMIT 30");
-		for (int i = 0; i < 30; i++)
-			System.out.println(ress.get(i).getValue("x") + " | "
-					+ ress.get(i).getValue("p") + " |  "
-					+ ress.get(i).getValue("y"));
-
+		//ForwardChainingRDFSInferencer inf = new ForwardChainingRDFSInferencer(store);
+		repo = new SailRepository(store);
+		
 		try {
 			repo.initialize();
 			con = repo.getConnection();
