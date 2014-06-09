@@ -11,31 +11,39 @@ import org.openrdf.query.BindingSet;
 public class Main {
 	Agent2[] population;
 	ArrayList<BindingSet> initialMemory;
+	ArrayList<BindingSet> memory;
 	public static RepositoryHandler rh;
 	public static HashSet<String> globalEntailments = new HashSet<String>();
+	public static ArrayList<Integer[]> homogeneityGraphs;
+	
+	public Main(int popsize) {
+		
+		initializeRepository();
+		initializePopulation(popsize);
+	}
 
 	public Main() {
 		initializeRepository();
 	}
-
 	private void initializeRepository() {
 		rh = new RepositoryHandler("repo");
 		initialMemory = rh
-				.queryRepo("SELECT ?x ?p ?y WHERE { ?x ?p ?y } LIMIT 300000");
+				.queryRepo("SELECT ?x ?p ?y WHERE { ?x ?p ?y } LIMIT 600000");
 		System.out.println("Initialized repository.");
+		memory = randomMemory();
 	}
 
 	private ArrayList<BindingSet> randomMemory() {
 		ArrayList<BindingSet> result = new ArrayList<BindingSet>();
 		Random ra = new Random();
 		for (int i = 0; i < 100; i++)
-			result.add(initialMemory.get(ra.nextInt(300000)));
+			result.add(initialMemory.get(ra.nextInt(600000)));
 		return result;
 	}
 
 	@SuppressWarnings("unused")
 	private void testAgent() {
-		Agent2 test = new Agent2(300, initialMemory);
+		Agent2 test = new Agent2(200, initialMemory);
 		for (int i = 0; i < initialMemory.size(); i++)
 			System.out.println(initialMemory.get(i).getValue("x") + " | "
 					+ initialMemory.get(i).getValue("p") + " | "
@@ -44,8 +52,9 @@ public class Main {
 		test.printQueries();
 	}
 
-	private void initializePopulation() {
-		population = new Agent2[1000];
+	public void initializePopulation(int popsize) {
+		homogeneityGraphs = new ArrayList<Integer[]>();
+		population = new Agent2[popsize];
 		ArrayList<BindingSet> rm = randomMemory();
 		for (int i = 0; i < population.length; i++) {
 			population[i] = new Agent2(200, rm);
@@ -55,6 +64,7 @@ public class Main {
 	}
 
 	private void evolvePopulation(int n) {
+		System.out.println("Evolving...");
 		Arrays.sort(population, new AgentTotalComparator());
 
 		int top10score = 0;
@@ -72,26 +82,24 @@ public class Main {
 					population[i].getTermParams());
 			population[population.length - i - 1].mutate();
 		}
-		ArrayList<BindingSet> nm = randomMemory();
 		for (int i = 0; i < population.length; i++) {
-			population[i].resetRound(nm);
+			population[i].resetRound();
 		}
-		// System.out.println("Evolved population");
 	}
 
 	public static void main(String[] args) {
-		Main m = new Main();
-		m.initializePopulation();
+		Main m = new Main(1000);
 		m.evolutionRounds(500, 5);
-
 	}
 
 	public void evolutionRounds(int rounds, int steps) {
 		for (int i = 0; i < rounds; i++) {
 			takeSteps(steps);
 			evolvePopulation(i);
+			homogeneityGraphs.add(getHomogeneity());
+			//population[0].printQueries();
 		}
-		population[0].printQueries();
+		
 	}
 
 	public void testCode() {
@@ -101,6 +109,24 @@ public class Main {
 			System.out.println(ress.get(i).getValue("x") + " | "
 					+ ress.get(i).getValue("p") + " | "
 					+ ress.get(i).getValue("y"));
+	}
+	
+	public Integer[] getHomogeneity() {
+		int[] queryNgraph = new int[population.length];
+		int[] paramGraph = new int[population.length];
+		int[] termParamGraph = new int[population.length];
+		Integer[] finalGraph = new Integer[population.length];
+		
+		for(int i=0; i< population.length; i++) {
+			queryNgraph[i] = population[i].getQueryN();
+			paramGraph[i] = population[i].getMostFrequentParam();
+			termParamGraph[i] = population[i].getMostFrequentTermParam();
+		}
+		
+		for(int i=0; i< population.length; i++) 
+			finalGraph[i] = queryNgraph[i] * 9 * 9 + paramGraph[i] * 9 + termParamGraph[i];
+		
+		return finalGraph;	
 	}
 
 	private void takeSteps(int n) {
@@ -114,11 +140,15 @@ public class Main {
 
 	}
 
-	private class AgentTotalComparator implements Comparator<Agent2> {
+	private class AgentTotalComparator implements Comparator<Object> {
 
-		public int compare(Agent2 o1, Agent2 o2) {
-			return (o1.getTotalScore() > o2.getTotalScore() ? -1 : (o1
-					.getTotalScore() == o2.getTotalScore() ? 0 : 1));
+		public int agentCompare(Agent2 o1, Agent2 o2) {
+			return (o1.getTotalScore()>o2.getTotalScore() ? -1 : (o1.getTotalScore()==o2.getTotalScore() ? 0 : 1));
+		}
+
+		@Override
+		public int compare(Object o1, Object o2) {
+			return agentCompare((Agent2)o1, (Agent2)o2);
 		}
 	}
 }

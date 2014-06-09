@@ -6,16 +6,16 @@ import java.util.Random;
 
 import org.openrdf.query.BindingSet;
 
-//termparams en params worden arraylists querytries dus size van die params return value ook param. Abstraheer constructeer met een parameterArrayList, mutatie van alle ints/bits met een % kans
+// mutatie van alle ints/bits met een % kans
 public class Agent2 {
+	private static Entailment ent = new Entailment();
 	private int returns, score, totalScore;
-	private int queryTries;
 	private int memorySize;
+	private static int initialQueryTries = 2;
 	private ArrayList<Integer> params;
 	ArrayList<Integer> termParams;
 	private ArrayList<BindingSet> memory;
 	private ArrayList<String> candidatesS, candidatesP, candidatesO, queries;
-	private HashSet<String> entailments;
 	static String[] syntax = {
 			" <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ",
 			" <http://www.w3.org/2000/01/rdf-schema#domain> ",
@@ -31,13 +31,12 @@ public class Agent2 {
 		returns = 0;
 		score = 0;
 		totalScore = 0;
-		queryTries = 10;
+		
 		this.memorySize = memorySize;
 		this.params = params;
 		this.termParams = termParams;
 
 		memory = initialMemory;
-		entailments = new HashSet<String>();
 	}
 
 	public ArrayList<Integer> getParams() {
@@ -48,19 +47,51 @@ public class Agent2 {
 		return termParams;
 	}
 
+	public int getQueryN() {
+		return params.size();
+	}
+	public int getMostFrequentParam() {
+		int[] frequencies = new int[9];
+		for(int i=0;i<params.size();i++) 
+			frequencies[params.get(i)]++;
+		int most = -1, result = -1;
+		for(int i=0;i<frequencies.length;i++)
+			if(frequencies[i] > most) {
+				most = frequencies[i];
+				result = i;
+			}
+		return result;
+	}
+	
+	public int getMostFrequentTermParam() {
+		int[] frequencies = new int[9];
+		for(int i=0;i<termParams.size();i++) 
+			frequencies[termParams.get(i)]++;
+		int most = -1, result = -1;
+		for(int i=0;i<frequencies.length;i++)
+			if(frequencies[i] > most) {
+				most = frequencies[i];
+				result = i;
+			}
+		return result;
+	}
+	
 	public void mutate() { // change one digit in the params
 		Random rand = new Random();
-
-		int nn = rand.nextInt(params.size() + 1);
-		if (nn == params.size()) {
-			params.add(rand.nextInt(9));
-			termParams.add(rand.nextInt(4));
-		} else {
-			if (rand.nextBoolean())
-				termParams.set(rand.nextInt(params.size()), rand.nextInt(4));
-			else
-				params.set(nn, rand.nextInt(9));
+		if (rand.nextInt(10) < 7) {
+			if (rand.nextBoolean()) {
+				params.add(rand.nextInt(9));
+				termParams.add(rand.nextInt(4));
+			} else if(params.size() > 1) {
+				params.remove(rand.nextInt(params.size()));
+				termParams.remove(rand.nextInt(termParams.size()));
+			}
 		}
+		int nn = rand.nextInt(params.size());
+		if (rand.nextBoolean())
+			termParams.set(rand.nextInt(params.size()), rand.nextInt(4));
+		else
+			params.set(nn, rand.nextInt(9));
 	}
 
 	public int getScore() {
@@ -75,15 +106,12 @@ public class Agent2 {
 		return returns;
 	}
 
-	public void resetRound(ArrayList<BindingSet> nm) {
+	public void resetRound() {
 		score = 0;
 		totalScore = 0;
-		entailments = new HashSet<String>();
-		memory = nm;
 	}
 
 	public void takeStep(ArrayList<BindingSet> nm) {
-		entailments = new HashSet<String>();
 		memory = nm;
 		buildQueries();
 		for (int i = 0; i < queries.size(); i++) {
@@ -93,7 +121,7 @@ public class Agent2 {
 				returns += result.size();
 				int n = 0;
 				for (int j = 0; j < result.size(); j++) {
-					if (n >= (100 / queryTries)) // amount of results to process
+					if (n >= (100 / params.size())) // amount of results to process
 						break;
 					if (memory.contains(result.get(j)))
 						continue;
@@ -129,7 +157,7 @@ public class Agent2 {
 	public static ArrayList<Integer> getRandomParams(int n) {
 		ArrayList<Integer> result = new ArrayList<Integer>();
 		Random r = new Random();
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < initialQueryTries; i++)
 			result.add(r.nextInt(n));
 		return result;
 	}
@@ -146,9 +174,7 @@ public class Agent2 {
 		String start = "SELECT ?x ?p ?y WHERE { ?x ?p ?y . ";
 		String end = ") } LIMIT 205";
 
-		for (int i = 0; i < queryTries; i++) {
-			if (queries.size() >= 10)
-				break;
+		for (int i = 0; i < params.size(); i++) {
 
 			String[] clause = { "?x ", " ?p ", " ?y" };
 			int mp = (params.get(i) % 3);
@@ -223,112 +249,20 @@ public class Agent2 {
 		}
 	}
 
-	public String insertTerm(int n) { // n should be queryTries
+	public String insertTerm(int n) {
 		if (termParams.get(n) == 0)
 			return " ?p ";
 		else
 			return syntax[termParams.get(n) - 1];
 	}
 
-	public void entail() { /*
-		// Entail using rules RDFS2 and RDFS3
-		for (int i = 0; i < memory.size(); i++) {
-			if (memory.get(i).getValue("p").toString().contains("domain")) { // entailment
-																				// pattern
-																				// RDFS2
-				for (int j = 0; j < memory.size(); j++)
-					if (memory.get(j).getValue("p").toString()
-							.equals(memory.get(i).getValue("x").toString())) {
-						String a = memory.get(j).getValue("x").toString();
-						String b = memory.get(i).getValue("y").toString();
-						if (a.substring(0, 4).equals("http"))
-							a = "<" + a + ">";
-						if (b.substring(0, 4).equals("http"))
-							b = "<" + b + ">";
-						String etm = a
-								+ "  <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>  "
-								+ b;
-						if (!entailments.contains(etm)) {
-							score++;
-							totalScore++;
-							entailments.add(etm);
-							if (!Main.globalEntailments.contains(etm)
-									&& !checkIfEntailmentInDataset(etm)) {
-								Main.globalEntailments.add(etm);
-								// System.out.println("(RDFS2) "+etm);
-							}
-						}
-					}
-			}
-
-			if (memory.get(i).getValue("p").toString()
-					.equals("http://www.w3.org/2000/01/rdf-schema#range")) { // entailment
-																				// pattern
-																				// RDFS3
-				for (int j = 0; j < memory.size(); j++)
-					if (memory.get(j).getValue("p").toString()
-							.equals(memory.get(i).getValue("x").toString())) {
-						String a = memory.get(j).getValue("y").toString();
-						String b = memory.get(i).getValue("y").toString();
-						if (a.substring(0, 4).equals("http"))
-							a = "<" + a + ">";
-						if (b.substring(0, 4).equals("http"))
-							b = "<" + b + ">";
-						String etm = a
-								+ "  <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>  "
-								+ b;
-						if (!entailments.contains(etm)
-								&& !checkIfEntailmentInDataset(etm)) {
-							score++;
-							totalScore++;
-							entailments.add(etm);
-							if (!Main.globalEntailments.contains(etm)) {
-								Main.globalEntailments.add(etm);
-								// System.out.println("(RDFS3) "+etm);
-							}
-						}
-					}
-			}
-			if (memory.get(i).getValue("p").toString()
-					.equals("http://www.w3.org/2000/01/rdf-schema#subClassOf")) { // entailment
-																					// pattern
-																					// RDFS9
-				for (int j = 0; j < memory.size(); j++)
-					if (memory
-							.get(j)
-							.getValue("p")
-							.toString()
-							.equals("<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>")
-							&& memory.get(j).getValue("y")
-									.equals(memory.get(i).getValue("x"))) {
-						String a = memory.get(i).getValue("x").toString();
-						String b = memory.get(j).getValue("y").toString();
-						if (a.substring(0, 4).equals("http"))
-							a = "<" + a + ">";
-						if (b.substring(0, 4).equals("http"))
-							b = "<" + b + ">";
-						String etm = a
-								+ "  <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>  "
-								+ b;
-						if (!entailments.contains(etm)
-								&& !checkIfEntailmentInDataset(etm)) {
-							score++;
-							totalScore++;
-							entailments.add(etm);
-							if (!Main.globalEntailments.contains(etm)) {
-								Main.globalEntailments.add(etm);
-								// System.out.println("(RDFS3) "+etm);
-							}
-						}
-					}
-
-			}
-
-		} */
+	public void entail() {
+		totalScore += (ent.entail(ent.createModel(memory)));
 	}
 
 	public boolean checkIfEntailmentInDataset(String entailment) {
 		return (Main.rh.queryRepo(
 				"SELECT ?x ?p ?y WHERE { " + entailment + " }").size() > 0);
 	}
+
 }
