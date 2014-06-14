@@ -132,9 +132,15 @@ public class Main {
 	private void takeSteps(int n) {
 		for (int j = 0; j < n; j++) {
 			ArrayList<BindingSet> nm = randomMemory();
-			for (int i = 0; i < population.length; i++) {
+			for (int i = 0; i < population.length; i++)
 				population[i].takeStep(nm);
-			}
+			
+			//for (int i = 0; i < population.length; i++)
+				//population[i].startEntail();
+			
+			for (int i = 0; i < population.length; i++)
+				population[i].waitEntail();
+			
 			// System.out.println("Step taken.");
 		}
 

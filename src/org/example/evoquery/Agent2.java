@@ -8,13 +8,14 @@ import org.openrdf.query.BindingSet;
 
 // mutatie van alle ints/bits met een % kans
 public class Agent2 {
-	private static Entailment ent = new Entailment();
+	private Entailment ent = new Entailment();
 	private int returns, score, totalScore;
 	private int memorySize;
 	private static int initialQueryTries = 2;
 	private ArrayList<Integer> params;
 	ArrayList<Integer> termParams;
 	private ArrayList<BindingSet> memory;
+	private Thread et;
 	private ArrayList<String> candidatesS, candidatesP, candidatesO, queries;
 	static String[] syntax = {
 			" <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ",
@@ -133,9 +134,22 @@ public class Agent2 {
 			} catch (Exception e) {
 			}
 		}
-		entail();
+		//entail();
+		et = new Thread(new EntailThread());
+		et.start();
 	}
 
+	public void startEntail() {
+		et.start();
+	}
+	public void waitEntail() {
+		try {
+			et.join();
+		} catch (InterruptedException e) {
+			System.out.println("Interrupted.");
+			e.printStackTrace();
+		}
+	}
 	public void loadCandidates() {
 		candidatesS = new ArrayList<String>();
 		candidatesP = new ArrayList<String>();
@@ -259,10 +273,13 @@ public class Agent2 {
 	public void entail() {
 		totalScore += (ent.entail(ent.createModel(memory)));
 	}
-
-	public boolean checkIfEntailmentInDataset(String entailment) {
-		return (Main.rh.queryRepo(
-				"SELECT ?x ?p ?y WHERE { " + entailment + " }").size() > 0);
+	
+	private class EntailThread implements Runnable {
+		private Entailment ent = new Entailment();
+		@Override
+		public void run() {
+			totalScore += (ent.entail(ent.createModel(memory)));
+		}
+		
 	}
-
 }

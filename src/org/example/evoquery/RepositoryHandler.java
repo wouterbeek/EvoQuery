@@ -68,7 +68,7 @@ public class RepositoryHandler {
 		File file = new File(filepath);
 		try {
 			con.add(file, "http://example.org/dbpedia_ontology",
-					RDFFormat.RDFXML);
+					RDFFormat.NTRIPLES);
 		} catch (RDFParseException e) {
 			e.printStackTrace();
 		} catch (RepositoryException e) {
