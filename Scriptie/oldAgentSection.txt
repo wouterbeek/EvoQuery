@@ -1,0 +1,31 @@
+At initialization, each agent is given two integer lists as parameters used in query construction which constitutes the agent's genotype. The length of these arrays is variable  Furthermore, an agent is given an initial memory as a starting point for related search. All agents share access to the following set of ontological vocabulary used in the entailments:\\*
+
+\begin{center}
+\begin{tabular}{ | l | }
+\hline
+http://www.w3.org/1999/02/22-rdf-syntax-ns\# type\\
+http://www.w3.org/2000/01/rdf-schema\# domain\\
+http://www.w3.org/2000/01/rdf-schema\# range\\
+http://www.w3.org/2000/01/rdf-schema\# subClassOf\\
+\hline
+\end{tabular}
+\end{center}
+
+At each step, every agent constructs his queries by using its genotype to select terms from the vocabulary and it's memory. For each query, an agent selects either a unique Subject, Proposition, or Object from its memory, and one of the four provided vocabulary terms. Additionally, the agent decides where to put these terms in the query's WHERE clause. 
+
+
+For example, a random agent may have in memory the triple:
+\\*
+
+\begin{tabular}{ | l | c | r | }
+\hline
+http://dbpedia.org/resource/Aristotle & name & "Aristotle" \\
+\hline
+\end{tabular}
+\\* \\*
+And decide, to construct as its first query: \\
+
+{\small
+SELECT ?x ?p ?y 
+WHERE \{  ?x ?p ?y . ?x  http://www.w3.org/2000/01/rdf-schema\# range http://dbpedia.org/resource/Aristotle \} } \\*\\*
+The resultset of each query is limited to 200 triples. Results are handled by entering the first ten triples that are not contained in the memory therein. Afterwards, entailments are made over the resulting memory, and their number is added to the score. Entailed triples already contained in the dataset are not scored.
