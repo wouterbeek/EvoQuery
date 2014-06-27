@@ -2,7 +2,8 @@
 \usepackage{mathtools}
 \begin{document}
 
-Abstract
+\section{Abstract}
+[COMING SOON]
 
 \section{Introduction}
 To make use of the exciting possibilities that the Semantic Web offers, Artificial Intelligence techniques, including Evolutionary methods, have been used in many of its related tasks. Examples of these include query answering[1] and reasoning[?]. However, part of the great potential of the Semantic Web lies in the ability of software agents to use its semantic structure to collect relevant or related data. This paper explores the use of Evolutionary Programming to train such agents. The agents will be given a starting set of triples, and attempt to effectively query a dataset for related information. Entailments gained from the combined results is used as a scoring mechanism for the relevancy of results. 
@@ -26,7 +27,7 @@ The dataset used as a search space for the agents was the union of the DBpedia p
 
 At each iteration of searching, an agent can load a maximum of a fifty triples into personal memory in addition to the fifty triples of the initial memory already present. Thus, at each step, the search space of all solutions of a step is:
 \begin{equation}
-S = \left \{  x : 100 \leq \left | x \right |\leq 200, I\subseteq x\right \}
+S = \left \{  x : 50 \leq \left | x \right |\leq 100, I\subseteq x\right \}
 \end{equation}
 Where \textit{G} is the complete dataset and \textit{I} is the initial memory.
 
@@ -37,25 +38,34 @@ The Sesame framework was used both as a datastore and a querying engine. The ent
 For the experiment, the compute service of the DAS-4 VU cluster was used. The programs threads were run on twenty-four 2.4 Ghz Intel E5620 processors supported by 130GB of memory.
 
 \section{Results}
-The experiment was run for a thousand rounds over a population of 300 agents. Results were gathered on the changes in genotype and behaviour of the agents. Two clear trends were identified. The amount of queries conducted per round rose sharply, suggesting a strategy of loading heterogenous results from varying queries was favourable. In contrast, the usage of ontological terms in queries dropped sharply, implying a more general approach of searching for related triples trumped querying for specific ontological relations.
+The experiment was run for a thousand rounds over a population of 300 agents. Results were gathered on the changes in genotype and behaviour of the agents. 
 
-[Figures 1 and 2 graphs showing the trends in behaviour]
+For the performance of agents, first a baseline was measured as the entailments made over a hundred randomly selected triples from the dataset. In a thousand sets of randomly selected triples, the amount of entailments made were almost exclusively a hundred. These are all single argument Type:Resource entailments. In short, practically no interesting entailments could be made.
+The top agents performed considerably better, with the best agent of each round averaging 152.4 entailments, and the top ten agents of each round averaging 143.24 entailments. Ironically, the total population actually averaged a lower score than the randomized baseline, at 97.83 entailments. This is most likely due to agents conducting queries giving back no results, and thereby actually ending up with less than the maximum hundred triples. 
 
-Surprisingly, these changes in behaviour did not lead to a significant change in performance. The amount of entailments made by both the entire population and the top performing agents was assessed. In no category was any noteworthy improvement gained.
+In the behaviour of the agents, two clear trends were identified. The amount of queries conducted per round rose sharply during the experiment, suggesting a strategy of loading heterogenous results from varying queries was favourable. Furthermore, in the top performing agents. Furthermore, an increase in homogeneity at each round in the term parameters was noticed, suggesting the success of specific memory-to-query mappings. 
 
-[Figure 3 graph showing no improvement performance over rounds]
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{queryn.png}
+\caption{Query behaviour per round}
+\end{figure} 
 
+Surprisingly, these evolutionary changes in behaviour did not lead to a significant change in performance. The amount of entailments made by both the entire population and the top performing agents was assessed. In no category was any noteworthy improvement gained during the rounds of the experiment.
 
-The lack of improvement despite the changes in behaviour suggest that the differences between agents in querying strategy do not affect performance. This can be explained by comparing the static behaviour all agents share with the behaviour that is evolutionary. All agents search based on terms from their personal memory. What kind of terms they select from their memory (subjects, predicates, objects) and where in the query clause they place these terms is evolutionary, in addition to the choice they make whether to use ontological predicates. Since the scoring is based on a generic total of all possible entailments, the collection of any set of related triples may constitute a near-optimal solution.
-
-
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{performance.png}
+\caption{Entailment performance per round}
+\end{figure} 
 
 \section{Conclusion}
+[COMING SOON]
 
 
 \subsection{Related work}
 Recently, it has been argued that many Semantic Web related tasks can be more successfully approached as optimization problems suitable for Evolutionary and Swarm computing. Specifically, the scalability of Evolutionary solutions has been noted to be required to deal with the massive and opaque nature of Semantic Web data.[2] 
-Evolutionary Computing has already been used to optimize Query Answering, and again advantages in memory usage and scalability have been noted. [1] For the task of appropriate Query Construction, its complexity has been noted and some solutions have been put forward for it regarding keyword search, although these do nut utilize Evolutionary methods.[4][5]
+Evolutionary Computing has already been used to optimize Query Answering, and again advantages in memory usage and scalability have been noted. [1] For the task of appropriate Query Construction, its complexity has been noted and some solutions have been put forward for it regarding keyword search, although these do not utilize Evolutionary methods.[4][5]
 
 
 \begin{thebibliography}{9}
